@@ -54,10 +54,10 @@ if [ -d "$CHOICE" ]; then
 :b 2: Terminal
 :r 3: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
     case "$OPENCHOICE" in
-    *close)
+    *Close)
         exit
         ;;
-    *terminal)
+    *Terminal)
         cd "$CHOICE" || exit 1
         instantutils open terminal &
         ;;
@@ -72,9 +72,9 @@ elif ! [ -e "$CHOICE" ]; then
 else
 
     OPENCHOICE="$(echo ">>b File opener
-:y 1 - xdg open
-:b 2 - rifle
-:b 3 - custom
+:y 1 - Xdg open
+:b 2 - Rifle
+:b 3 - Custom
 :r Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE")"
 
     [ -z "$OPENCHOICE" ] && exit
@@ -83,10 +83,10 @@ else
     *open)
         xdg-open "$CHOICE"
         ;;
-    *rifle)
+    *Rifle)
         rifle "$CHOICE"
         ;;
-    *close)
+    *Close)
         exit
         ;;
     *)
