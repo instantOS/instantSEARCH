@@ -50,16 +50,16 @@ fi
 if [ -d "$CHOICE" ]; then
 
     OPENCHOICE="$(echo ">>b Directory opener
-:y File manager
-:b Terminal
-:r Close" | instantmenu -ps 1 -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+:y 1: File manager
+:b 2: Terminal
+:r 3: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
     case "$OPENCHOICE" in
     *close)
         exit
         ;;
     *terminal)
         cd "$CHOICE" || exit 1
-        instantutils open terminal
+        instantutils open terminal &
         ;;
     *)
         instantutils open filemanager "$CHOICE" &
@@ -73,10 +73,10 @@ elif ! [ -e "$CHOICE" ]; then
 fi
 
 OPENCHOICE="$(echo ">>b File opener
-:y xdg open
-:b rifle
-:b custom
-:r Close" | instantmenu -ps 1 -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+:y 1 - xdg open
+:b 2 - rifle
+:b 3 - custom
+:r Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE")"
 
 [ -z "$OPENCHOICE" ] && exit
 
