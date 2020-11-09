@@ -25,14 +25,14 @@ if [ "$SEARCHSTRING" = "recent files" ]; then
     [ -z "$SEARCHSTRING" ] && exit
     CHOICE="$SEARCHSTRING"
 else
-    # TODO sort by depth
     searchitem() {
-        if grep -q '\.\*' <<<"$1"; then
-            echo "searching with regex enabled"
-            plocate -r -i "$1" --limit 2000
-        else
-            plocate -i "$1" --limit 2000
-        fi
+        {
+            if grep -q '\.\*' <<<"$1"; then
+                plocate -r -i "$1" --limit 2000
+            else
+                plocate -i "$1" --limit 2000
+            fi
+        } | perl -n -e '$x = $_; $x =~ tr%/%%cd; print length($x), " $_";' | sort -k 1n -k 2 | sed 's/^[0-9][0-9]* //'
     }
 
     if [ -z "$RECENTFILE" ]; then
