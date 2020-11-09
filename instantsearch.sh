@@ -37,8 +37,7 @@ else
 
     if [ -z "$RECENTFILE" ]; then
         SEARCHLIST="$(searchitem "$SEARCHSTRING")"
-        if [ -z "$SEARCHLIST" ]
-        then
+        if [ -z "$SEARCHLIST" ]; then
             imenu -m "no results for $SEARCHSTRING"
             exit
         fi
@@ -49,9 +48,24 @@ else
 fi
 
 if [ -d "$CHOICE" ]; then
-    echo "open in file manager
-open in terminal"
-    instantutils open filemanager "$CHOICE" &
+
+    OPENCHOICE="$(echo ">>b Directory opener
+:y File manager
+:b Terminal
+:r Close" | instantmenu -ps 1 -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+    case "$OPENCHOICE" in
+    *close)
+        exit
+        ;;
+    *terminal)
+        cd "$CHOICE" || exit 1
+        instantutils open terminal
+        ;;
+    *)
+        instantutils open filemanager "$CHOICE" &
+        ;;
+    esac
+
     exit
 elif ! [ -e "$CHOICE" ]; then
     echo "file not existing"
@@ -62,7 +76,7 @@ OPENCHOICE="$(echo ">>b File opener
 :y xdg open
 :b rifle
 :b custom
-:r Close" | instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+:r Close" | instantmenu -ps 1 -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
 
 [ -z "$OPENCHOICE" ] && exit
 
@@ -72,6 +86,9 @@ case "$OPENCHOICE" in
     ;;
 *rifle)
     rifle "$CHOICE"
+    ;;
+*close)
+    exit
     ;;
 *)
     OPENER="$(instantmenu_path |
