@@ -66,37 +66,38 @@ if [ -d "$CHOICE" ]; then
         ;;
     esac
 
-    exit
 elif ! [ -e "$CHOICE" ]; then
     echo "file not existing"
     exit
-fi
+else
 
-OPENCHOICE="$(echo ">>b File opener
+    OPENCHOICE="$(echo ">>b File opener
 :y 1 - xdg open
 :b 2 - rifle
 :b 3 - custom
 :r Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE")"
 
-[ -z "$OPENCHOICE" ] && exit
+    [ -z "$OPENCHOICE" ] && exit
 
-case "$OPENCHOICE" in
-*open)
-    xdg-open "$CHOICE"
-    ;;
-*rifle)
-    rifle "$CHOICE"
-    ;;
-*close)
-    exit
-    ;;
-*)
-    OPENER="$(instantmenu_path |
-        instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
-    [ -z "$OPENER" ] && exit
-    $OPENER "$CHOICE" &
-    ;;
-esac
+    case "$OPENCHOICE" in
+    *open)
+        xdg-open "$CHOICE"
+        ;;
+    *rifle)
+        rifle "$CHOICE"
+        ;;
+    *close)
+        exit
+        ;;
+    *)
+        OPENER="$(instantmenu_path |
+            instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+        [ -z "$OPENER" ] && exit
+        $OPENER "$CHOICE" &
+        ;;
+    esac
+
+fi
 
 echo "$CHOICE" >>"$INCACHE"
 if [ "$(wc -l "$INCACHE" | grep -o '^[0-9]*')" -gt 500 ]; then
