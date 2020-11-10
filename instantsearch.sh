@@ -47,25 +47,28 @@ else
     fi
 fi
 
-if [ -d "$CHOICE" ]; then
-
+opendir() {
     OPENCHOICE="$(echo ">>b Directory opener
 :y 1: File manager
 :b 2: Terminal
-:r 3: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+:r 3: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
+    [ -z "$OPENCHOICE" ] && exit
     case "$OPENCHOICE" in
     *Close)
         exit
         ;;
     *Terminal)
-        cd "$CHOICE" || exit 1
+        cd "$1" || exit 1
         instantutils open terminal &
         ;;
     *)
-        instantutils open filemanager "$CHOICE" &
+        instantutils open filemanager "$1" &
         ;;
     esac
+}
 
+if [ -d "$CHOICE" ]; then
+    opendir "$CHOICE"
 elif ! [ -e "$CHOICE" ]; then
     echo "file not existing"
     exit
@@ -75,7 +78,8 @@ else
 :y 1 - Xdg open
 :b 2 - Rifle
 :b 3 - Custom
-:r Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE")"
+:b 4 - Directory
+:r Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
 
     [ -z "$OPENCHOICE" ] && exit
 
@@ -85,6 +89,9 @@ else
         ;;
     *Rifle)
         rifle "$CHOICE"
+        ;;
+    *Directory)
+        opendir "${CHOICE%*/}" 
         ;;
     *Close)
         exit
