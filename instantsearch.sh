@@ -6,6 +6,18 @@ if [ "$1" = "-s" ]; then
     echo "settings mode"
     instantinstall mlocate
     instantinstall plocate
+    if ! systemctl status plocate-build.service; then
+        if ! [ -e /etc/systemd/system/updatedb.service.wants/plocate-build.service ]; then
+            if imenu -c "instantsearch needs the plocate build service to function. enable now?"; then
+                if ! systemctl enable plocate-build.service; then
+                    notify-send "failed to activate plocate build service"
+                    exit
+                fi
+            else
+                exit
+            fi
+        fi
+    fi
     exit
 fi
 
@@ -75,32 +87,50 @@ elif ! [ -e "$CHOICE" ]; then
 else
 
     OPENCHOICE="$(echo ">>b File opener
-:y 1 - Xdg open
-:b 2 - Rifle
-:b 3 - Custom
-:b 4 - Directory
-:r Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
+:g 1 - Default
+:y 2 - Xdg open
+:b 3 - Rifle
+:b 4 - Custom
+:b 5 - Directory
+:r 6 - Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
+
+    programopen() {
+        OPENER="$(instantmenu_path |
+            instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+        [ -z "$OPENER" ] && exit
+        $OPENER "$CHOICE" &
+        iconf instantsearch."$FILEMIME" "$OPENER"
+    }
 
     [ -z "$OPENCHOICE" ] && exit
 
+    FILEMIME="$(file -b --mime-type "$CHOICE" | sed 's/\//./g')"
+
     case "$OPENCHOICE" in
+    *Default)
+        if ! iconf instantsearch."$FILEMIME"; then
+            notify-send "choose program to open filetype"
+            programopen
+        else
+            eval "$(iconf instantsearch."$FILEMIME") \"$CHOICE\""
+        fi
+        ;;
     *open)
         xdg-open "$CHOICE"
+        iconf instantsearch."$FILEMIME" xdg-open
         ;;
     *Rifle)
         rifle "$CHOICE"
+        iconf instantsearch."$FILEMIME" rifle
         ;;
     *Directory)
-        opendir "${CHOICE%*/}" 
+        opendir "${CHOICE%*/}"
         ;;
     *Close)
         exit
         ;;
     *)
-        OPENER="$(instantmenu_path |
-            instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
-        [ -z "$OPENER" ] && exit
-        $OPENER "$CHOICE" &
+        programopen
         ;;
     esac
 
