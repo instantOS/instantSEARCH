@@ -34,7 +34,7 @@ if [ "$SEARCHSTRING" = "search history" ]; then
 
     if ! grep -q .... "$SCACHE"; then
         notify-send 'history empty, search something first'
-        instantseach &
+        instantsearch &
         exit
     fi
 
