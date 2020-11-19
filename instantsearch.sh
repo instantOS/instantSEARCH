@@ -101,7 +101,7 @@ opendir() {
     OPENCHOICE="$(echo ">>b Directory opener
 :y 1: File manager
 :b 2: Terminal
-:r 3: Close" | instantmenu -E -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
+:r 3: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
     [ -z "$OPENCHOICE" ] && exit
     case "$OPENCHOICE" in
     *Close)
@@ -130,7 +130,7 @@ else
 :b 3 - Rifle
 :b 4 - Custom
 :b 5 - Directory
-:r 6 - Close" | instantmenu -E -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
+:r 6 - Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
 
     programopen() {
         OPENER="$(instantmenu_path |
@@ -175,7 +175,6 @@ else
 fi
 
 echo "$SEARCHSTRING" >>"$SCACHE"
-
 if [ "$(wc -l "$SCACHE" | grep -o '^[0-9]*')" -gt 500 ]; then
     sed -i '1,100d' "$SCACHE"
 fi
