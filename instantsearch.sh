@@ -22,14 +22,47 @@ if [ "$1" = "-s" ]; then
 fi
 
 INCACHE="$HOME/.cache/instantos/instantsearch"
+SCACHE="$HOME/.cache/instantos/searchterms"
 
 if [ -e "$INCACHE" ]; then
-    SEARCHSTRING="$(echo "recent files" | instantmenu -c -l 1 -bw 10 -q 'enter search term')"
+    SEARCHSTRING="$(echo "recent files
+search history
+settings" | instantmenu -c -E -l 3 -bw 10 -q 'enter search term')"
 else
     SEARCHSTRING="$(echo "" | instantmenu -c -l 1 -bw 10 -q 'enter search term')"
 fi
 
 [ -z "$SEARCHSTRING" ] && exit
+
+if [ "$SEARCHSTRING" = "search history" ]; then
+    if ! grep -q .... "$SCACHE"; then
+        notify-send 'history empty, search something first'
+        instantseach &
+        exit
+    fi
+    SEARCHSTRING="$(tac "$SCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -c -l 20 -bw 10 -q 'recent search terms')"
+    [ -z "$SEARCHSTRING" ] && exit
+elif [ "$SEARCHSTRING" = settings ]; then
+    echo "opening settings"
+    CHOICE="$(echo ":b 累Rescan files
+:b Back" | instantmenu -w -1 -h -1 -c -l 20 -bw 10 -q 'instantSEARCH settings')"
+    [ -z "$CHOICE" ] && exit
+    case "$CHOICE" in
+    *files)
+        if pgrep updatedb; then
+            imenu -m 'another scan is already running'
+            exit
+        fi
+        instantutils open terminal -e bash -c 'echo "updating database" && sudo updatedb && echo "updating plocate index" && sudo plocate-build /var/lib/mlocate/mlocate.db /var/lib/mlocate/plocate.db'
+        exit
+        ;;
+    *Back)
+        instantsearch &
+        exit
+        ;;
+    esac
+
+fi
 
 if [ "$SEARCHSTRING" = "recent files" ]; then
     RECENTFILE=true
@@ -134,6 +167,12 @@ else
         ;;
     esac
 
+fi
+
+echo "$SEARCHSTRING" >>"$SCACHE"
+
+if [ "$(wc -l "$SCACHE" | grep -o '^[0-9]*')" -gt 500 ]; then
+    sed -i '1,100d' "$SCACHE"
 fi
 
 echo "$CHOICE" >>"$INCACHE"
