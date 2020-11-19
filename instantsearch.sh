@@ -24,22 +24,20 @@ fi
 INCACHE="$HOME/.cache/instantos/instantsearch"
 SCACHE="$HOME/.cache/instantos/searchterms"
 
-if [ -e "$INCACHE" ]; then
     SEARCHSTRING="$(echo "recent files
 search history
 settings" | instantmenu -c -E -l 3 -bw 10 -q 'enter search term')"
-else
-    SEARCHSTRING="$(echo "" | instantmenu -c -l 1 -bw 10 -q 'enter search term')"
-fi
 
 [ -z "$SEARCHSTRING" ] && exit
 
 if [ "$SEARCHSTRING" = "search history" ]; then
+
     if ! grep -q .... "$SCACHE"; then
         notify-send 'history empty, search something first'
         instantseach &
         exit
     fi
+
     SEARCHSTRING="$(tac "$SCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -c -l 20 -bw 10 -q 'recent search terms')"
     [ -z "$SEARCHSTRING" ] && exit
 elif [ "$SEARCHSTRING" = settings ]; then
@@ -65,8 +63,15 @@ elif [ "$SEARCHSTRING" = settings ]; then
 fi
 
 if [ "$SEARCHSTRING" = "recent files" ]; then
+    if ! [ -e "$INCACHE" ]
+    then
+        notify-send 'file list empty, open something with instantSEARCH to fill it'
+        instantsearch &
+        exit
+    fi
+
     RECENTFILE=true
-    SEARCHSTRING="$(tac "$INCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -c -l 20 -bw 10 -q 'recent files')"
+    SEARCHSTRING="$(tac "$INCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -F -c -l 20 -bw 10 -q 'recent files')"
     [ -z "$SEARCHSTRING" ] && exit
     CHOICE="$SEARCHSTRING"
 else
@@ -96,7 +101,7 @@ opendir() {
     OPENCHOICE="$(echo ">>b Directory opener
 :y 1: File manager
 :b 2: Terminal
-:r 3: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
+:r 3: Close" | instantmenu -E -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
     [ -z "$OPENCHOICE" ] && exit
     case "$OPENCHOICE" in
     *Close)
@@ -125,7 +130,7 @@ else
 :b 3 - Rifle
 :b 4 - Custom
 :b 5 - Directory
-:r 6 - Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
+:r 6 - Close" | instantmenu -E -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
 
     programopen() {
         OPENER="$(instantmenu_path |
