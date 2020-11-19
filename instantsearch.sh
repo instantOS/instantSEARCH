@@ -91,7 +91,7 @@ else
             imenu -m "no results for $SEARCHSTRING"
             exit
         fi
-        CHOICE="$(instantmenu -c -l 20 -bw 4 -w -1 -q 'search results' \
+        CHOICE="$(instantmenu -s -c -l 20 -bw 4 -w -1 -q 'search results' \
             <<<"$SEARCHLIST")"
         [ -z "$CHOICE" ] && exit
     fi
