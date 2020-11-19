@@ -71,7 +71,7 @@ if [ "$SEARCHSTRING" = "recent files" ]; then
     fi
 
     RECENTFILE=true
-    SEARCHSTRING="$(tac "$INCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -F -c -l 20 -bw 10 -q 'recent files')"
+    SEARCHSTRING="$(tac "$INCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -F -s -c -l 20 -bw 10 -q 'recent files')"
     [ -z "$SEARCHSTRING" ] && exit
     CHOICE="$SEARCHSTRING"
 else
