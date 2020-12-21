@@ -3,13 +3,22 @@
 # file search GUI for plocate
 
 if [ "$1" = "-s" ]; then
-    echo "settings mode"
     instantinstall mlocate
     instantinstall plocate
+
+    if ! groups | grep -q plocate; then
+        PUSER="$(whoami)"
+        imenu -c 'instantsearch is missing some configuration. repair now?' || exit
+        instantsudo groupadd plocate || exit 1
+        instantsudo usermod -aG plocate "$PUSER" || exit 1
+        imenu -c 'changes will be applied upon reboot. reboot now?' || exit
+        instantshutdown reboot
+    fi
+
     if ! systemctl status plocate-build.service; then
         if ! [ -e /etc/systemd/system/updatedb.service.wants/plocate-build.service ]; then
             if imenu -c "instantsearch needs the plocate build service to function. enable now?"; then
-                if ! systemctl enable plocate-build.service; then
+                if ! instantsudo systemctl enable plocate-build.service; then
                     notify-send "failed to activate plocate build service"
                     exit
                 fi
@@ -18,13 +27,24 @@ if [ "$1" = "-s" ]; then
             fi
         fi
     fi
+
+    if plocate /usr/share/instantutils /dev/null 2>&1 | grep -q '/var/lib/plocate/plocate.db:'; then
+        if echo 'instantSEARCH needs to scan your drives
+generate those now?
+This can take a long time on systems with slow storage
+but it will be a one time process' | imenu -C; then
+            echo "generating first index"
+            instantutils open terminal -e bash -c "sudo update-instantsearch"
+        fi
+    fi
+
     exit
 fi
 
 INCACHE="$HOME/.cache/instantos/instantsearch"
 SCACHE="$HOME/.cache/instantos/searchterms"
 
-    SEARCHSTRING="$(echo "recent files
+SEARCHSTRING="$(echo "recent files
 search history
 settings" | instantmenu -c -E -l 3 -bw 10 -q 'enter search term')"
 
@@ -51,7 +71,7 @@ elif [ "$SEARCHSTRING" = settings ]; then
             imenu -m 'another scan is already running'
             exit
         fi
-        instantutils open terminal -e bash -c 'echo "updating database" && sudo updatedb && echo "updating plocate index" && sudo plocate-build /var/lib/mlocate/mlocate.db /var/lib/mlocate/plocate.db'
+        instantutils open terminal -e bash -c "sudo update-instantsearch"
         exit
         ;;
     *Back)
@@ -63,8 +83,7 @@ elif [ "$SEARCHSTRING" = settings ]; then
 fi
 
 if [ "$SEARCHSTRING" = "recent files" ]; then
-    if ! [ -e "$INCACHE" ]
-    then
+    if ! [ -e "$INCACHE" ]; then
         notify-send 'file list empty, open something with instantSEARCH to fill it'
         instantsearch &
         exit
@@ -78,9 +97,9 @@ else
     searchitem() {
         {
             if grep -q '\.\*' <<<"$1"; then
-                plocate -r -i "$1" --limit 2000
+                plocate -r -i "$1" --limit 2000 || checkhealth
             else
-                plocate -i "$1" --limit 2000
+                plocate -i "$1" --limit 2000 || checkhealth
             fi
         } | perl -n -e '$x = $_; $x =~ tr%/%%cd; print length($x), " $_";' | sort -k 1n -k 2 | sed 's/^[0-9][0-9]* //'
     }
