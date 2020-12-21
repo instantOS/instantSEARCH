@@ -4,8 +4,8 @@
 
 # check health of all requirements
 if [ "$1" = "-H" ]; then
-    instantinstall mlocate
-    instantinstall plocate
+    instantinstall mlocate || exit 1
+    instantinstall plocate || exit 1
 
     if ! groups | grep -q plocate; then
         PUSER="$(whoami)"
@@ -16,20 +16,20 @@ if [ "$1" = "-H" ]; then
         instantshutdown reboot
     fi
 
-    if ! systemctl status plocate-build.service; then
-        if ! [ -e /etc/systemd/system/updatedb.service.wants/plocate-build.service ]; then
-            if imenu -c "instantsearch needs the plocate build service to function. enable now?"; then
-                if ! instantsudo systemctl enable plocate-build.service; then
+    if ! systemctl is-enabled plocate-updatedb.timer; then
+        if imenu -c "instantsearch needs the plocate build service to function. enable now?"; then
+            if ! instantsudo systemctl enable plocate-updatedb.timer; then
+                if ! systemctl list-unit-files | grep plocate-updatedb.timer; then
+                    imenu -m 'error: plocate service not found, is plocate installed on your system?'
+                else
                     notify-send "failed to activate plocate build service"
-                    exit
                 fi
-            else
                 exit
             fi
         fi
     fi
 
-    if plocate /usr/share/instantutils 2>&1 /dev/null | grep -q '/var/lib/plocate/plocate.db:'; then
+    if plocate /usr/share/instantutils /dev/null 2>&1 | grep -q '/var/lib/plocate/plocate.db:'; then
         if echo 'instantSEARCH needs to scan your drives
 generate those now?
 This can take a long time on systems with slow storage
@@ -109,8 +109,7 @@ else
         SEARCHLIST="$(searchitem "$SEARCHSTRING")"
         if [ -z "$SEARCHLIST" ]; then
             imenu -m "no results for $SEARCHSTRING"
-            if plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis 2>&1 /dev/null | grep -q '/var/lib/plocate/plocate.db:'
-            then
+            if plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1 | grep -q '/var/lib/plocate/plocate.db:'; then
                 instantsearch -H
             fi
             exit
