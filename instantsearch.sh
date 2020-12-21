@@ -31,9 +31,9 @@ if [ "$1" = "-H" ]; then
 
     if plocate /usr/share/instantutils /dev/null 2>&1 | grep -q '/var/lib/plocate/plocate.db:'; then
         if echo 'instantSEARCH needs to scan your drives
-generate those now?
 This can take a long time on systems with slow storage
-but it will be a one time process' | imenu -C; then
+but it will be a one time process
+Start scan now?' | imenu -C; then
             echo "generating first index"
             instantutils open terminal -e bash -c "sudo update-instantsearch"
         fi
