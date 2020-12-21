@@ -2,7 +2,8 @@
 
 # file search GUI for plocate
 
-if [ "$1" = "-s" ]; then
+# check health of all requirements
+if [ "$1" = "-H" ]; then
     instantinstall mlocate
     instantinstall plocate
 
@@ -28,7 +29,7 @@ if [ "$1" = "-s" ]; then
         fi
     fi
 
-    if plocate /usr/share/instantutils /dev/null 2>&1 | grep -q '/var/lib/plocate/plocate.db:'; then
+    if plocate /usr/share/instantutils 2>&1 /dev/null | grep -q '/var/lib/plocate/plocate.db:'; then
         if echo 'instantSEARCH needs to scan your drives
 generate those now?
 This can take a long time on systems with slow storage
@@ -97,9 +98,9 @@ else
     searchitem() {
         {
             if grep -q '\.\*' <<<"$1"; then
-                plocate -r -i "$1" --limit 2000 || checkhealth
+                plocate -r -i "$1" --limit 2000
             else
-                plocate -i "$1" --limit 2000 || checkhealth
+                plocate -i "$1" --limit 2000
             fi
         } | perl -n -e '$x = $_; $x =~ tr%/%%cd; print length($x), " $_";' | sort -k 1n -k 2 | sed 's/^[0-9][0-9]* //'
     }
@@ -108,6 +109,10 @@ else
         SEARCHLIST="$(searchitem "$SEARCHSTRING")"
         if [ -z "$SEARCHLIST" ]; then
             imenu -m "no results for $SEARCHSTRING"
+            if plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis 2>&1 /dev/null | grep -q '/var/lib/plocate/plocate.db:'
+            then
+                instantsearch -H
+            fi
             exit
         fi
         CHOICE="$(instantmenu -s -c -l 20 -bw 4 -w -1 -q 'search results' \
