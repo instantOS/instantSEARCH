@@ -3,7 +3,9 @@
 # file search GUI for plocate
 
 # check health of all requirements
-if [ "$1" = "-H" ]; then
+case "$1" in
+"-H")
+
     instantinstall mlocate || exit 1
     instantinstall plocate || exit 1
 
@@ -40,7 +42,15 @@ Start scan now?' | imenu -C; then
     fi
 
     exit
-fi
+    ;;
+-d)
+    if [ -z "$2" ] || ! [ -e "$2" ]; then
+        echo "usage: instantsearch -d directory"
+        exit 1
+    fi
+    DPREFIX="$(realpath "$2")/.*"
+    ;;
+esac
 
 INCACHE="$HOME/.cache/instantos/instantsearch"
 SCACHE="$HOME/.cache/instantos/searchterms"
@@ -97,8 +107,8 @@ if [ "$SEARCHSTRING" = "recent files" ]; then
 else
     searchitem() {
         {
-            if grep -q '\.\*' <<<"$1"; then
-                plocate -r -i "$1" --limit 2000
+            if grep -q '\.\*' <<<"$1" || [ -n "$DPREFIX" ]; then
+                plocate -r -i "$DPREFIX$1" --limit 2000
             else
                 plocate -i "$1" --limit 2000
             fi
@@ -124,7 +134,8 @@ opendir() {
     OPENCHOICE="$(echo ">>b Directory opener
 :y 1: File manager
 :b 2: Terminal
-:r 3: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
+:b 3: Search
+:r 4: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
     [ -z "$OPENCHOICE" ] && exit
     case "$OPENCHOICE" in
     *Close)
@@ -133,6 +144,10 @@ opendir() {
     *Terminal)
         cd "$1" || exit 1
         instantutils open terminal &
+        ;;
+    *Search)
+        instantsearch -d "$1" 
+        exit
         ;;
     *)
         instantutils open filemanager "$1" &
