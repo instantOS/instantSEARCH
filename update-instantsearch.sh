@@ -16,6 +16,10 @@ LOCATEGROUP=plocate
 DBFILE=/var/lib/plocate/plocate.db
 
 plocate-build /var/lib/mlocate/mlocate.db $DBFILE.new
+if ! grep -q plocate /etc/group
+then
+    groupadd plocate
+fi
 chgrp $LOCATEGROUP $DBFILE.new
 mv $DBFILE.new $DBFILE
 

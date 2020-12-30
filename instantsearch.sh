@@ -119,7 +119,8 @@ else
         SEARCHLIST="$(searchitem "$SEARCHSTRING")"
         if [ -z "$SEARCHLIST" ]; then
             imenu -m "no results for $SEARCHSTRING"
-            if plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1 | grep -q '/var/lib/plocate/plocate.db:'; then
+            ERRORMSG="$(plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1)"
+            if grep -q '/var/lib/plocate/plocate.db:' <<<"$ERRORMSG" || grep -q 'pread' <<<"$ERRORMSG"; then
                 instantsearch -H
             fi
             exit
@@ -146,7 +147,7 @@ opendir() {
         instantutils open terminal &
         ;;
     *Search)
-        instantsearch -d "$1" 
+        instantsearch -d "$1"
         exit
         ;;
     *)
