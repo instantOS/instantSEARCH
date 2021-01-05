@@ -78,11 +78,7 @@ elif [ "$SEARCHSTRING" = settings ]; then
     [ -z "$CHOICE" ] && exit
     case "$CHOICE" in
     *files)
-        if pgrep updatedb; then
-            imenu -m 'another scan is already running'
-            exit
-        fi
-        instantutils open terminal -e bash -c "sudo update-instantsearch"
+        rescanfiles
         exit
         ;;
     *Back)
@@ -156,6 +152,15 @@ opendir() {
     esac
 }
 
+rescanfiles() {
+    echo "rescanning"
+    if pgrep updatedb; then
+        imenu -m 'another scan is already running'
+        exit
+    fi
+    instantutils open terminal -e bash -c "sudo update-instantsearch && notify-send 'finished scanning files'"
+}
+
 if [ -d "$CHOICE" ]; then
     opendir "$CHOICE"
 elif ! [ -e "$CHOICE" ]; then
@@ -163,12 +168,7 @@ elif ! [ -e "$CHOICE" ]; then
     if echo "$CHOICE not found
 The file might have been moved or deleted. 
 Would you like to rescan your files to account for moved files?" | imenu -C "file not found error"; then
-        echo "rescanning"
-        if pgrep updatedb; then
-            imenu -m 'another scan is already running'
-            exit
-        fi
-        instantutils open terminal -e bash -c "sudo update-instantsearch"
+        rescanfiles
         exit
     fi
 

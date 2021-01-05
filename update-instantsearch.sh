@@ -9,6 +9,7 @@ then
 fi
 
 echo "updating instantsearch database"
+echo "please do not close this window"
 updatedb
 
 echo "updating plocate index"
