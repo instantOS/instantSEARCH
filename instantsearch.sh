@@ -121,7 +121,7 @@ else
             fi
             exit
         fi
-        CHOICE="$(instantmenu -s -c -l 20 -bw 4 -w -1 -q 'search results' \
+        CHOICE="$(instantmenu -s -c -l 20 -bw 4 -w -1 -q "search results for $SEARCHSTRING" \
             <<<"$SEARCHLIST")"
         [ -z "$CHOICE" ] && exit
     fi

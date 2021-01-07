@@ -2,7 +2,19 @@
 
 File search interface based on plocate
 
+## Features
+
+- Custom file opener
+- File history
+- Regex
+
 ## planned features
 
 - show file icon
-- open with dialog
+
+## Requirements
+
+- instantmenu
+- mlocate
+- plocate
+- instantutils
