@@ -2,8 +2,28 @@
 
 # file search GUI for plocate
 
-# check health of all requirements
+INCACHE="$HOME/.cache/instantos/instantsearch"
+SCACHE="$HOME/.cache/instantos/searchterms"
+
+# remove non-existing files from cache
+cleancache() {
+    echo "cleaning cache"
+    [ -e "${INCACHE}.new" ] && rm "${INCACHE}.new" 
+    while read -r file
+    do
+        if [ -e "$file" ]
+        then
+            echo "keeping $file"
+            echo "$file" >> "${INCACHE}.new"
+        else
+            echo "removing $file from cache"
+        fi
+    done <<<"$(sort -u "$INCACHE")"
+    cat "${INCACHE}.new" > "$INCACHE"
+}
+
 case "$1" in
+# check health of all requirements
 "-H")
 
     instantinstall mlocate || exit 1
@@ -50,10 +70,13 @@ Start scan now?' | imenu -C; then
     fi
     DPREFIX="$(realpath "$2")/.*"
     ;;
+-c)
+        echo "cleaning instantsearch cache"
+        cleancache
+        exit
+    ;;
 esac
 
-INCACHE="$HOME/.cache/instantos/instantsearch"
-SCACHE="$HOME/.cache/instantos/searchterms"
 
 SEARCHSTRING="$(echo "recent files
 search history
@@ -152,6 +175,7 @@ opendir() {
     esac
 }
 
+
 rescanfiles() {
     echo "rescanning"
     if pgrep updatedb; then
@@ -159,6 +183,7 @@ rescanfiles() {
         exit
     fi
     instantutils open terminal -e bash -c "sudo update-instantsearch && notify-send 'finished scanning files'"
+    cleancache
 }
 
 if [ -d "$CHOICE" ]; then
