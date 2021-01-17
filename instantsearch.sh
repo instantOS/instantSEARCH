@@ -32,7 +32,7 @@ case "$1" in
     if ! groups | grep -q plocate; then
         PUSER="$(whoami)"
         imenu -c 'instantsearch is missing some configuration. repair now?' || exit
-        instantsudo groupadd plocate || exit 1
+        instantsudo groupadd plocate
         instantsudo usermod -aG plocate "$PUSER" || exit 1
         imenu -c 'changes will be applied upon reboot. reboot now?' || exit
         instantshutdown reboot
@@ -74,6 +74,18 @@ Start scan now?' | imenu -C; then
         echo "cleaning instantsearch cache"
         cleancache
         exit
+    ;;
+-U)
+    echo "updating instantsearch"
+    update-instantsearch
+    exit
+    ;;
+--help)
+    echo 'usage: instantsearch
+    -H healthcheck
+    -U update database
+    -c clean cache'
+    exit
     ;;
 esac
 
