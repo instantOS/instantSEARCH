@@ -8,18 +8,16 @@ SCACHE="$HOME/.cache/instantos/searchterms"
 # remove non-existing files from cache
 cleancache() {
     echo "cleaning cache"
-    [ -e "${INCACHE}.new" ] && rm "${INCACHE}.new" 
-    while read -r file
-    do
-        if [ -e "$file" ]
-        then
+    [ -e "${INCACHE}.new" ] && rm "${INCACHE}.new"
+    while read -r file; do
+        if [ -e "$file" ]; then
             echo "keeping $file"
-            echo "$file" >> "${INCACHE}.new"
+            echo "$file" >>"${INCACHE}.new"
         else
             echo "removing $file from cache"
         fi
     done <<<"$(sort -u "$INCACHE")"
-    cat "${INCACHE}.new" > "$INCACHE"
+    cat "${INCACHE}.new" >"$INCACHE"
 }
 
 case "$1" in
@@ -71,18 +69,27 @@ Start scan now?' | imenu -C; then
     DPREFIX="$(realpath "$2")/.*"
     ;;
 -c)
-        echo "cleaning instantsearch cache"
-        cleancache
-        exit
+    echo "cleaning instantsearch cache"
+    cleancache
+    exit
     ;;
 esac
-
 
 SEARCHSTRING="$(echo "recent files
 search history
 settings" | instantmenu -c -E -l 3 -bw 10 -q 'enter search term')"
 
 [ -z "$SEARCHSTRING" ] && exit
+
+rescanfiles() {
+    echo "rescanning"
+    if pgrep updatedb; then
+        imenu -m 'another scan is already running'
+        exit
+    fi
+    instantutils open terminal -e bash -c "echo 'instantsearch updater' && sudo update-instantsearch && notify-send 'finished scanning files'"
+    cleancache
+}
 
 if [ "$SEARCHSTRING" = "search history" ]; then
 
@@ -173,17 +180,6 @@ opendir() {
         instantutils open filemanager "$1" &
         ;;
     esac
-}
-
-
-rescanfiles() {
-    echo "rescanning"
-    if pgrep updatedb; then
-        imenu -m 'another scan is already running'
-        exit
-    fi
-    instantutils open terminal -e bash -c "sudo update-instantsearch && notify-send 'finished scanning files'"
-    cleancache
 }
 
 if [ -d "$CHOICE" ]; then
