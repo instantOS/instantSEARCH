@@ -174,7 +174,8 @@ opendir() {
 :y 1: File manager
 :b 2: Terminal
 :b 3: Search
-:r 4: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
+:b 4 - Xdragon
+:r 5: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
     [ -z "$OPENCHOICE" ] && exit
     case "$OPENCHOICE" in
     *Close)
@@ -187,6 +188,9 @@ opendir() {
     *Search)
         instantsearch -d "$1"
         exit
+        ;;
+    *Xdragon)
+        xdragon "$1"
         ;;
     *)
         instantutils open filemanager "$1" &
@@ -214,7 +218,8 @@ else
 :b 3 - Rifle
 :b 4 - Custom
 :b 5 - Directory
-:r 6 - Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
+:b 6 - Xdragon
+:r 7 - Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
 
     programopen() {
         OPENER="$(instantmenu_path |
@@ -247,6 +252,9 @@ else
         ;;
     *Directory)
         opendir "${CHOICE%*/}"
+        ;;
+    *Xdragon)
+        xdragon "$1"
         ;;
     *Close)
         exit
