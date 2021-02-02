@@ -156,10 +156,11 @@ else
     if [ -z "$RECENTFILE" ]; then
         SEARCHLIST="$(searchitem "$SEARCHSTRING")"
         if [ -z "$SEARCHLIST" ]; then
-            imenu -m "no results for $SEARCHSTRING"
             ERRORMSG="$(plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1)"
             if grep -q '/var/lib/plocate/plocate.db:' <<<"$ERRORMSG" || grep -q 'pread' <<<"$ERRORMSG"; then
                 instantsearch -H
+            else
+                imenu -m "no results for $SEARCHSTRING"
             fi
             exit
         fi
