@@ -87,9 +87,15 @@ Start scan now?' | imenu -C; then
     ;;
 esac
 
+if [ -z "$DPREFIX" ]; then
+    SEARCHTITLE="enter search term"
+else
+    SEARCHTITLE="search through $DPREFIX"
+fi
+
 SEARCHSTRING="$(echo "recent files
 search history
-settings" | instantmenu -c -E -l 3 -bw 10 -q 'enter search term')"
+settings" | instantmenu -c -E -l 3 -bw 10 -q "$SEARCHTITLE")"
 
 [ -z "$SEARCHSTRING" ] && exit
 
