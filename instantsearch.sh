@@ -258,7 +258,7 @@ else
         iconf instantsearch."$FILEMIME" rifle
         ;;
     *Directory)
-        opendir "${CHOICE%*/}"
+        opendir "${CHOICE%/*}"
         ;;
     *Xdragon)
         xdragon "$1"
