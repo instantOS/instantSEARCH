@@ -24,7 +24,6 @@ case "$1" in
 # check health of all requirements
 "-H")
 
-    instantinstall mlocate || exit 1
     instantinstall plocate || exit 1
 
     if ! groups | grep -q plocate; then
@@ -49,7 +48,8 @@ case "$1" in
         fi
     fi
 
-    if plocate /usr/share/instantutils /dev/null 2>&1 | grep -q '/var/lib/plocate/plocate.db:'; then
+    ERROR
+    if checkdb; then
         if echo 'instantSEARCH needs to scan your drives
 This can take a long time on systems with slow storage
 but it will be a one time process
@@ -101,6 +101,14 @@ rescanfiles() {
     fi
     instantutils open terminal -e bash -c "echo 'instantsearch updater' && sudo update-instantsearch && notify-send 'finished scanning files'"
     cleancache
+}
+
+checkdb() {
+    ERRORMSG="$(plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1)"
+    grep -q '/var/lib/plocate/plocate.db:' <<<"$ERRORMSG" || return 0
+    grep -q 'pread' <<<"$ERRORMSG" || return 0
+    grep -iq 'inappropriate' <<<"$ERRORMSG" || return 0
+    return 1
 }
 
 if [ "$SEARCHSTRING" = "search history" ]; then
@@ -156,8 +164,7 @@ else
     if [ -z "$RECENTFILE" ]; then
         SEARCHLIST="$(searchitem "$SEARCHSTRING")"
         if [ -z "$SEARCHLIST" ]; then
-            ERRORMSG="$(plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1)"
-            if grep -q '/var/lib/plocate/plocate.db:' <<<"$ERRORMSG" || grep -q 'pread' <<<"$ERRORMSG"; then
+            if checkdb; then
                 instantsearch -H
             else
                 imenu -m "no results for $SEARCHSTRING"

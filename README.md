@@ -2,6 +2,14 @@
 
 File search interface based on plocate
 
+## Installation from source
+
+```sh
+git clone https://github.com/instantSEARCH
+cd instantSEARCH
+sudo make install
+```
+
 ## Features
 
 - Custom file opener
@@ -15,6 +23,5 @@ File search interface based on plocate
 ## Requirements
 
 - instantmenu
-- mlocate
 - plocate
 - instantutils
