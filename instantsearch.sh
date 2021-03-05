@@ -20,6 +20,14 @@ cleancache() {
     cat "${INCACHE}.new" >"$INCACHE"
 }
 
+checkdb() {
+    ERRORMSG="$(plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1)"
+    grep -q '/var/lib/plocate/plocate.db:' <<<"$ERRORMSG" || return 0
+    grep -q 'pread' <<<"$ERRORMSG" || return 0
+    grep -iq 'inappropriate' <<<"$ERRORMSG" || return 0
+    return 1
+}
+
 case "$1" in
 # check health of all requirements
 "-H")
@@ -48,7 +56,6 @@ case "$1" in
         fi
     fi
 
-    ERROR
     if checkdb; then
         if echo 'instantSEARCH needs to scan your drives
 This can take a long time on systems with slow storage
@@ -109,13 +116,6 @@ rescanfiles() {
     cleancache
 }
 
-checkdb() {
-    ERRORMSG="$(plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1)"
-    grep -q '/var/lib/plocate/plocate.db:' <<<"$ERRORMSG" || return 0
-    grep -q 'pread' <<<"$ERRORMSG" || return 0
-    grep -iq 'inappropriate' <<<"$ERRORMSG" || return 0
-    return 1
-}
 
 if [ "$SEARCHSTRING" = "search history" ]; then
 
