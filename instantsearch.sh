@@ -22,10 +22,14 @@ cleancache() {
 
 checkdb() {
     ERRORMSG="$(plocate thisisatextthatisntsupposedtobefounditsjustatestpleasedontcreateafilecalledthis /dev/null 2>&1)"
-    grep -q '/var/lib/plocate/plocate.db:' <<<"$ERRORMSG" || return 0
-    grep -q 'pread' <<<"$ERRORMSG" || return 0
-    grep -iq 'inappropriate' <<<"$ERRORMSG" || return 0
-    return 1
+    [ -z "$ERRORMSG" ] && return 0
+    if grep -q '/var/lib/plocate/plocate.db:' <<<"$ERRORMSG" ||
+        grep -q 'pread' <<<"$ERRORMSG" ||
+        grep -iq 'inappropriate' <<<"$ERRORMSG"; then
+        return 1
+    else
+        return 0
+    fi
 }
 
 case "$1" in
@@ -56,7 +60,7 @@ case "$1" in
         fi
     fi
 
-    if checkdb; then
+    if ! checkdb; then
         if echo 'instantSEARCH needs to scan your drives
 This can take a long time on systems with slow storage
 but it will be a one time process
@@ -116,7 +120,6 @@ rescanfiles() {
     cleancache
 }
 
-
 if [ "$SEARCHSTRING" = "search history" ]; then
 
     if ! grep -q .... "$SCACHE"; then
@@ -170,7 +173,7 @@ else
     if [ -z "$RECENTFILE" ]; then
         SEARCHLIST="$(searchitem "$SEARCHSTRING")"
         if [ -z "$SEARCHLIST" ]; then
-            if checkdb; then
+            if ! checkdb; then
                 instantsearch -H
             else
                 imenu -m "no results for $SEARCHSTRING"
