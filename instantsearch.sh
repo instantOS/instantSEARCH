@@ -271,7 +271,7 @@ else
         opendir "${CHOICE%/*}"
         ;;
     *Xdragon)
-        xdragon "$1"
+        xdragon "$CHOICE"
         ;;
     *Close)
         exit
