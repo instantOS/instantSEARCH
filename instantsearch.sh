@@ -99,14 +99,14 @@ Start scan now?' | imenu -C; then
 esac
 
 if [ -z "$DPREFIX" ]; then
-    SEARCHTITLE="enter search term"
+    SEARCHTITLE="Enter search term  "
 else
     SEARCHTITLE="search through $DPREFIX"
 fi
 
-SEARCHSTRING="$(echo "recent files
-search history
-settings" | instantmenu -c -E -l 3 -bw 10 -q "$SEARCHTITLE")"
+SEARCHSTRING="$(echo ":b recent files
+:b search history
+:b settings" | instantmenu -h -1 -c -E -l 3 -bw 10 -q "$SEARCHTITLE")"
 
 [ -z "$SEARCHSTRING" ] && exit
 
@@ -120,7 +120,7 @@ rescanfiles() {
     cleancache
 }
 
-if [ "$SEARCHSTRING" = "search history" ]; then
+if [ "$SEARCHSTRING" = ":b search history" ]; then
 
     if ! grep -q .... "$SCACHE"; then
         notify-send 'history empty, search something first'
@@ -130,9 +130,10 @@ if [ "$SEARCHSTRING" = "search history" ]; then
 
     SEARCHSTRING="$(tac "$SCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -c -l 20 -bw 10 -q 'recent search terms')"
     [ -z "$SEARCHSTRING" ] && exit
-elif [ "$SEARCHSTRING" = settings ]; then
+elif [ "$SEARCHSTRING" = ":b settings" ]; then
     echo "opening settings"
     CHOICE="$(echo ":b 累Rescan files
+:r Delete search history
 :b Back" | instantmenu -w -1 -h -1 -c -l 20 -bw 10 -q 'instantSEARCH settings')"
     [ -z "$CHOICE" ] && exit
     case "$CHOICE" in
@@ -148,7 +149,7 @@ elif [ "$SEARCHSTRING" = settings ]; then
 
 fi
 
-if [ "$SEARCHSTRING" = "recent files" ]; then
+if [ "$SEARCHSTRING" = ":b recent files" ]; then
     if ! [ -e "$INCACHE" ]; then
         notify-send 'file list empty, open something with instantSEARCH to fill it'
         instantsearch &
