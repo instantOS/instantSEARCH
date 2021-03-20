@@ -141,6 +141,11 @@ elif [ "$SEARCHSTRING" = ":b settings" ]; then
         rescanfiles
         exit
         ;;
+    *history)
+        imenu -c 'delete all past search terms?' || exit
+        echo '' >"$SCACHE"
+        exit
+        ;;
     *Back)
         instantsearch &
         exit
