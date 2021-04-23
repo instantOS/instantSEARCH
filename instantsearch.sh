@@ -244,7 +244,7 @@ opendir() {
 
 programopen() {
     OPENER="$(instantmenu_path |
-        instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+        instantmenu -l 20 -c -h -1 -wm -w -1 -q "${1:-CHOICE}")"
     [ -z "$OPENER" ] && exit
     $OPENER "${1:-CHOICE}" &
     iconf instantsearch."$FILEMIME" "$OPENER"
