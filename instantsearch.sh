@@ -106,7 +106,8 @@ fi
 
 SEARCHSTRING="$(echo ":b recent files
 :b search history
-:b settings" | instantmenu -h -1 -c -E -l 3 -bw 10 -q "$SEARCHTITLE")"
+:b Fzf
+:b settings" | instantmenu -h -1 -c -E -l 4 -bw 10 -q "$SEARCHTITLE")"
 
 [ -z "$SEARCHSTRING" ] && exit
 
@@ -153,98 +154,6 @@ elif [ "$SEARCHSTRING" = ":b settings" ]; then
     esac
 
 fi
-
-if [ "$SEARCHSTRING" = ":b recent files" ]; then
-    if ! [ -e "$INCACHE" ]; then
-        notify-send 'file list empty, open something with instantSEARCH to fill it'
-        instantsearch &
-        exit
-    fi
-
-    RECENTFILE=true
-    SEARCHSTRING="$(tac "$INCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -F -s -c -l 20 -bw 10 -q 'recent files')"
-    [ -z "$SEARCHSTRING" ] && exit
-    CHOICE="$SEARCHSTRING"
-else
-    searchitem() {
-        {
-            if grep -q '\.\*' <<<"$1" || [ -n "$DPREFIX" ]; then
-                plocate -r -i "$DPREFIX$1" --limit 2000
-            else
-                plocate -i "$1" --limit 2000
-            fi
-        } | perl -n -e '$x = $_; $x =~ tr%/%%cd; print length($x), " $_";' | sort -k 1n -k 2 | sed 's/^[0-9][0-9]* //'
-    }
-
-    if [ -z "$RECENTFILE" ]; then
-        SEARCHLIST="$(searchitem "$SEARCHSTRING")"
-        if [ -z "$SEARCHLIST" ]; then
-            if ! checkdb; then
-                instantsearch -H
-            else
-                imenu -m "no results for $SEARCHSTRING"
-            fi
-            exit
-        fi
-        CHOICE="$(instantmenu -s -c -l 20 -bw 4 -w -1 -q "search results for $SEARCHSTRING" \
-            <<<"$SEARCHLIST")"
-        [ -z "$CHOICE" ] && exit
-    fi
-fi
-
-opendir() {
-    OPENCHOICE="$(echo ">>b Directory opener
-:y 1 - File manager
-:b 2 - Terminal
-:b 3 - Search
-:b 4 - Fzf
-:b 5 - Xdragon
-:r 6 - Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
-    [ -z "$OPENCHOICE" ] && exit
-    case "$OPENCHOICE" in
-    *Close)
-        exit
-        ;;
-    *Terminal)
-        cd "$1" || exit 1
-        instantutils open terminal &
-        ;;
-    *Fzf)
-        cd "$1" || exit 1
-        FILECHOICE="$(
-            instantfilepick
-        )" || exit 1
-
-        if [ -d "$FILECHOICE" ]; then
-            opendir "$(realpath "$FILECHOICE")"
-        else
-            echo file
-            realpath "$FILECHOICE"
-            openfile "$(realpath "$FILECHOICE")"
-        fi
-        exit
-
-        ;;
-    *Search)
-        instantsearch -d "$1"
-        exit
-        ;;
-    *Xdragon)
-        xdragon "$1"
-        ;;
-    *)
-        instantutils open filemanager "$1" &
-        ;;
-    esac
-}
-
-programopen() {
-    OPENER="$(instantmenu_path |
-        instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
-    [ -z "$OPENER" ] && exit
-    $OPENER "${1:-CHOICE}" &
-    iconf instantsearch."$FILEMIME" "$OPENER"
-}
 
 openfile() {
 
@@ -293,6 +202,112 @@ openfile() {
     esac
 
 }
+
+opendir() {
+    OPENCHOICE="$(echo ">>b Directory opener
+:y 1 - File manager
+:b 2 - Terminal
+:b 3 - Search
+:b 4 - Fzf
+:b 5 - Terminal file manager
+:b 6 - Xdragon
+:r 7 - Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
+    [ -z "$OPENCHOICE" ] && exit
+    case "$OPENCHOICE" in
+    *Close)
+        exit
+        ;;
+    *Terminal*file*)
+        cd "$1" || exit 1
+        instantutils open termfilemanager &
+        ;;
+    *Terminal)
+        cd "$1" || exit 1
+        instantutils open terminal &
+        ;;
+    *Fzf)
+        cd "$1" || exit 1
+        fzfsearch
+        ;;
+    *Search)
+        instantsearch -d "$1"
+        exit
+        ;;
+    *Xdragon)
+        xdragon "$1"
+        ;;
+    *)
+        instantutils open filemanager "$1" &
+        ;;
+    esac
+}
+
+programopen() {
+    OPENER="$(instantmenu_path |
+        instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+    [ -z "$OPENER" ] && exit
+    $OPENER "${1:-CHOICE}" &
+    iconf instantsearch."$FILEMIME" "$OPENER"
+}
+
+fzfsearch() {
+    FILECHOICE="$(
+        instantfilepick
+    )" || exit 1
+
+    if [ -d "$FILECHOICE" ]; then
+        opendir "$(realpath "$FILECHOICE")"
+    else
+        echo file
+        realpath "$FILECHOICE"
+        openfile "$(realpath "$FILECHOICE")"
+    fi
+    exit
+}
+
+if [ "$SEARCHSTRING" = ":b Fzf" ]; then
+    cd / || exit
+    fzfsearch
+
+fi
+
+if [ "$SEARCHSTRING" = ":b recent files" ]; then
+    if ! [ -e "$INCACHE" ]; then
+        notify-send 'file list empty, open something with instantSEARCH to fill it'
+        instantsearch &
+        exit
+    fi
+
+    RECENTFILE=true
+    SEARCHSTRING="$(tac "$INCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -F -s -c -l 20 -bw 10 -q 'recent files')"
+    [ -z "$SEARCHSTRING" ] && exit
+    CHOICE="$SEARCHSTRING"
+else
+    searchitem() {
+        {
+            if grep -q '\.\*' <<<"$1" || [ -n "$DPREFIX" ]; then
+                plocate -r -i "$DPREFIX$1" --limit 2000
+            else
+                plocate -i "$1" --limit 2000
+            fi
+        } | perl -n -e '$x = $_; $x =~ tr%/%%cd; print length($x), " $_";' | sort -k 1n -k 2 | sed 's/^[0-9][0-9]* //'
+    }
+
+    if [ -z "$RECENTFILE" ]; then
+        SEARCHLIST="$(searchitem "$SEARCHSTRING")"
+        if [ -z "$SEARCHLIST" ]; then
+            if ! checkdb; then
+                instantsearch -H
+            else
+                imenu -m "no results for $SEARCHSTRING"
+            fi
+            exit
+        fi
+        CHOICE="$(instantmenu -s -c -l 20 -bw 4 -w -1 -q "search results for $SEARCHSTRING" \
+            <<<"$SEARCHLIST")"
+        [ -z "$CHOICE" ] && exit
+    fi
+fi
 
 if [ -d "$CHOICE" ]; then
     opendir "$CHOICE"
