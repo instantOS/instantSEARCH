@@ -194,11 +194,12 @@ fi
 
 opendir() {
     OPENCHOICE="$(echo ">>b Directory opener
-:y 1: File manager
-:b 2: Terminal
-:b 3: Search
-:b 4 - Xdragon
-:r 5: Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
+:y 1 - File manager
+:b 2 - Terminal
+:b 3 - Search
+:b 4 - Fzf
+:b 5 - Xdragon
+:r 6 - Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
     [ -z "$OPENCHOICE" ] && exit
     case "$OPENCHOICE" in
     *Close)
@@ -207,6 +208,22 @@ opendir() {
     *Terminal)
         cd "$1" || exit 1
         instantutils open terminal &
+        ;;
+    *Fzf)
+        cd "$1" || exit 1
+        FILECHOICE="$(
+            instantfilepick
+        )" || exit 1
+
+        if [ -d "$FILECHOICE" ]; then
+            opendir "$(realpath "$FILECHOICE")"
+        else
+            echo file
+            realpath "$FILECHOICE"
+            openfile "$(realpath "$FILECHOICE")"
+        fi
+        exit
+
         ;;
     *Search)
         instantsearch -d "$1"
@@ -219,6 +236,62 @@ opendir() {
         instantutils open filemanager "$1" &
         ;;
     esac
+}
+
+programopen() {
+    OPENER="$(instantmenu_path |
+        instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
+    [ -z "$OPENER" ] && exit
+    $OPENER "${1:-CHOICE}" &
+    iconf instantsearch."$FILEMIME" "$OPENER"
+}
+
+openfile() {
+
+    OPENCHOICE="$(echo ">>b File opener
+:g 1 - Default
+:y 2 - Xdg open
+:b 3 - Rifle
+:b 4 - Custom
+:b 5 - Directory
+:b 6 - Xdragon
+:r 7 - Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$1" -a 3)"
+
+    [ -z "$OPENCHOICE" ] && exit
+
+    FILEMIME="$(file -b --mime-type "$1" | sed 's/\//./g')"
+
+    case "$OPENCHOICE" in
+    *Default)
+        if ! iconf instantsearch."$FILEMIME"; then
+            notify-send "choose program to open filetype"
+            programopen "$1"
+        else
+            eval "$(iconf instantsearch."$FILEMIME") \"$1\""
+        fi
+        ;;
+    *open)
+        xdg-open "$1"
+        iconf instantsearch."$FILEMIME" xdg-open
+        ;;
+    *Rifle)
+        rifle "$1"
+        iconf instantsearch."$FILEMIME" rifle
+        ;;
+    *Directory)
+        opendir "${1%/*}"
+        ;;
+    *Xdragon)
+        xdragon "$1"
+        ;;
+    *Close)
+        exit
+        ;;
+    *)
+        programopen "$1"
+        ;;
+    esac
+
 }
 
 if [ -d "$CHOICE" ]; then
@@ -234,59 +307,7 @@ Would you like to rescan your files to account for moved files?" | imenu -C "fil
 
     exit
 else
-
-    OPENCHOICE="$(echo ">>b File opener
-:g 1 - Default
-:y 2 - Xdg open
-:b 3 - Rifle
-:b 4 - Custom
-:b 5 - Directory
-:b 6 - Xdragon
-:r 7 - Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$CHOICE" -a 3)"
-
-    programopen() {
-        OPENER="$(instantmenu_path |
-            instantmenu -l 20 -c -h -1 -wm -w -1 -q "$CHOICE")"
-        [ -z "$OPENER" ] && exit
-        $OPENER "$CHOICE" &
-        iconf instantsearch."$FILEMIME" "$OPENER"
-    }
-
-    [ -z "$OPENCHOICE" ] && exit
-
-    FILEMIME="$(file -b --mime-type "$CHOICE" | sed 's/\//./g')"
-
-    case "$OPENCHOICE" in
-    *Default)
-        if ! iconf instantsearch."$FILEMIME"; then
-            notify-send "choose program to open filetype"
-            programopen
-        else
-            eval "$(iconf instantsearch."$FILEMIME") \"$CHOICE\""
-        fi
-        ;;
-    *open)
-        xdg-open "$CHOICE"
-        iconf instantsearch."$FILEMIME" xdg-open
-        ;;
-    *Rifle)
-        rifle "$CHOICE"
-        iconf instantsearch."$FILEMIME" rifle
-        ;;
-    *Directory)
-        opendir "${CHOICE%/*}"
-        ;;
-    *Xdragon)
-        xdragon "$CHOICE"
-        ;;
-    *Close)
-        exit
-        ;;
-    *)
-        programopen
-        ;;
-    esac
-
+    openfile "$CHOICE"
 fi
 
 echo "$SEARCHSTRING" >>"$SCACHE"
