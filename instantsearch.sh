@@ -32,6 +32,15 @@ checkdb() {
     fi
 }
 
+echousage() {
+    echo 'usage: instantsearch [action]
+    -d [directory]     search through specified directory
+    -c                 clean instantsearch cache
+    -U                 update file database
+    --help             show this message'
+    exit
+}
+
 case "$1" in
 # check health of all requirements
 "-H")
@@ -90,11 +99,10 @@ Start scan now?' | imenu -C; then
     exit
     ;;
 --help)
-    echo 'usage: instantsearch
-    -H healthcheck
-    -U update database
-    -c clean cache'
-    exit
+    echousage
+    ;;
+-h)
+    echousage
     ;;
 esac
 
