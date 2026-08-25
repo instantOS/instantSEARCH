@@ -107,15 +107,21 @@ Start scan now?' | imenu -C; then
 esac
 
 if [ -z "$DPREFIX" ]; then
-    SEARCHTITLE="Enter search term  "
+    SEARCHTITLE="Enter search term"
 else
     SEARCHTITLE="search through $DPREFIX"
 fi
 
-SEARCHSTRING="$(echo ":b recent files
-:b search history
-:b Fzf
-:b settings" | instantmenu -h -1 -c -E -l 4 -bw 10 -q "$SEARCHTITLE")"
+SEARCHSTRING="$(echo "{blue icon=file} recent files
+{blue icon=history} search history
+{blue icon=console} Fzf
+{blue icon=settings} settings" | instantmenu \
+    --line-height auto \
+    --position center \
+    --match-mode exact \
+    --lines 4 \
+    --border-width 10 \
+    --placeholder "$SEARCHTITLE")"
 
 [ -z "$SEARCHSTRING" ] && exit
 
@@ -129,7 +135,7 @@ rescanfiles() {
     cleancache
 }
 
-if [ "$SEARCHSTRING" = ":b search history" ]; then
+if [ "$SEARCHSTRING" = "search history" ]; then
 
     if ! grep -q .... "$SCACHE"; then
         notify-send 'history empty, search something first'
@@ -137,13 +143,23 @@ if [ "$SEARCHSTRING" = ":b search history" ]; then
         exit
     fi
 
-    SEARCHSTRING="$(tac "$SCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -c -l 20 -bw 10 -q 'recent search terms')"
+    SEARCHSTRING="$(tac "$SCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu \
+        --position center \
+        --lines 20 \
+        --border-width 10 \
+        --placeholder 'recent search terms')"
     [ -z "$SEARCHSTRING" ] && exit
-elif [ "$SEARCHSTRING" = ":b settings" ]; then
+elif [ "$SEARCHSTRING" = "settings" ]; then
     echo "opening settings"
-    CHOICE="$(echo ":b 累Rescan files
-:r Delete search history
-:b Back" | instantmenu -w -1 -h -1 -c -l 20 -bw 10 -q 'instantSEARCH settings')"
+    CHOICE="$(echo "{blue icon=refresh} Rescan files
+{red icon=trash} Delete search history
+{blue icon=arrow-left} Back" | instantmenu \
+        --width auto \
+        --line-height auto \
+        --position center \
+        --lines 20 \
+        --border-width 10 \
+        --placeholder 'instantSEARCH settings')"
     [ -z "$CHOICE" ] && exit
     case "$CHOICE" in
     *files)
@@ -165,14 +181,24 @@ fi
 
 openfile() {
 
-    OPENCHOICE="$(echo ">>b File opener
-:g 1 - Default
-:y 2 - Xdg open
-:b 3 - Rifle
-:b 4 - Custom
-:b 5 - Directory
-:b 6 - Xdragon
-:r 7 - Close" | instantmenu -ps 1 -l 20 -i -c -n -h -1 -wm -w -1 -q "$1" -a 3)"
+    OPENCHOICE="$(echo "{heading highlight} File opener
+{green icon=history} 1 - Default
+{yellow icon=open-in-new} 2 - Xdg open
+{blue icon=terminal} 3 - Rifle
+{blue icon=wrench} 4 - Custom
+{blue icon=folder-open} 5 - Directory
+{blue icon=hand-pointing-up} 6 - Xdragon
+{red icon=x} 7 - Close" | instantmenu \
+        --preselect 1 \
+        --lines 20 \
+        --insensitive \
+        --position center \
+        --auto-confirm \
+        --line-height auto \
+        --managed \
+        --width auto \
+        --placeholder "$1" \
+        --animation-length 3)"
 
     [ -z "$OPENCHOICE" ] && exit
 
@@ -212,14 +238,24 @@ openfile() {
 }
 
 opendir() {
-    OPENCHOICE="$(echo ">>b Directory opener
-:y 1 - File manager
-:b 2 - Terminal
-:b 3 - Search
-:b 4 - Fzf
-:b 5 - Terminal file manager
-:b 6 - Xdragon
-:r 7 - Close" | instantmenu -ps 1 -i -n -l 20 -c -h -1 -wm -w -1 -q "$1" -a 3)"
+    OPENCHOICE="$(echo "{heading highlight} Directory opener
+{yellow icon=format-list-bulleted} 1 - File manager
+{blue icon=terminal} 2 - Terminal
+{blue icon=file-search} 3 - Search
+{blue icon=package-down} 4 - Fzf
+{blue icon=console} 5 - Terminal file manager
+{blue icon=hand-pointing-up} 6 - Xdragon
+{red icon=x} 7 - Close" | instantmenu \
+        --preselect 1 \
+        --insensitive \
+        --auto-confirm \
+        --lines 20 \
+        --position center \
+        --line-height auto \
+        --managed \
+        --width auto \
+        --placeholder "$1" \
+        --animation-length 3)"
     [ -z "$OPENCHOICE" ] && exit
     case "$OPENCHOICE" in
     *Close)
@@ -252,7 +288,13 @@ opendir() {
 
 programopen() {
     OPENER="$(instantmenu_path |
-        instantmenu -l 20 -c -h -1 -wm -w -1 -q "${1:-CHOICE}")"
+        instantmenu \
+            --lines 20 \
+            --position center \
+            --line-height auto \
+            --managed \
+            --width auto \
+            --placeholder "${1:-CHOICE}")"
     [ -z "$OPENER" ] && exit
     $OPENER "${1:-CHOICE}" &
     iconf instantsearch."$FILEMIME" "$OPENER"
@@ -273,13 +315,13 @@ fzfsearch() {
     exit
 }
 
-if [ "$SEARCHSTRING" = ":b Fzf" ]; then
+if [ "$SEARCHSTRING" = "Fzf" ]; then
     cd / || exit
     fzfsearch
 
 fi
 
-if [ "$SEARCHSTRING" = ":b recent files" ]; then
+if [ "$SEARCHSTRING" = "recent files" ]; then
     if ! [ -e "$INCACHE" ]; then
         notify-send 'file list empty, open something with instantSEARCH to fill it'
         instantsearch &
@@ -287,7 +329,13 @@ if [ "$SEARCHSTRING" = ":b recent files" ]; then
     fi
 
     RECENTFILE=true
-    SEARCHSTRING="$(tac "$INCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu -F -s -c -l 20 -bw 10 -q 'recent files')"
+    SEARCHSTRING="$(tac "$INCACHE" | perl -nE '$seen{$_}++ or print' | instantmenu \
+        --match-mode dmenu \
+        --smart-case \
+        --position center \
+        --lines 20 \
+        --border-width 10 \
+        --placeholder 'recent files')"
     [ -z "$SEARCHSTRING" ] && exit
     CHOICE="$SEARCHSTRING"
 else
@@ -311,7 +359,13 @@ else
             fi
             exit
         fi
-        CHOICE="$(instantmenu -s -c -l 20 -bw 4 -w -1 -q "search results for $SEARCHSTRING" \
+        CHOICE="$(instantmenu \
+            --smart-case \
+            --position center \
+            --lines 20 \
+            --border-width 4 \
+            --width auto \
+            --placeholder "search results for $SEARCHSTRING" \
             <<<"$SEARCHLIST")"
         [ -z "$CHOICE" ] && exit
     fi
